@@ -16,7 +16,7 @@ import javax.mail.Store;
 
 import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.KeywordsResult;
 
-public class Practice {
+public class EmailSeparaterMain {
 
 	static ArrayList<String> categories;
 	static HashMap<String, FolderTempStorage> folderMap;
@@ -31,17 +31,12 @@ public class Practice {
 		return -1;
 	}
 
-	// public boolean createFolder(String folderName) throws MessagingException {
-	// store = session.getStore("imap");
-	// System.out.println("connecting store..");
-	// store.connect("imap.gmail.com", 993, "something@gmail.com", "password");
-	// System.out.println("connected !");
-	// final Folder defaultFolder = store.getDefaultFolder();
-	// return this.createFolder(defaultFolder, folderName);
-	// }
-
-	/*
-	 * Note that in Gmail folder hierarchy is not maintained.
+	/**
+	 * create folder
+	 *
+	 * @param parent
+	 * @param folderName
+	 * @return
 	 */
 	private static boolean createFolder(Folder parent, String folderName) {
 		folderMap.put(folderName, new FolderTempStorage(folderName));
@@ -78,8 +73,6 @@ public class Practice {
 		final String bluemix_password = cfg.getProperty("bluemix_password");
 		final boolean sentiment_positive = cfg.getProperty("sentiment_positive").equalsIgnoreCase("yes");
 		final boolean sentiment_negative = cfg.getProperty("sentiment_negative").equalsIgnoreCase("yes");
-		System.out.println(sentiment_positive);
-		System.out.println(sentiment_negative);
 		final boolean sentiment_used = sentiment_positive || sentiment_negative;
 
 		final Properties props = System.getProperties();
@@ -132,21 +125,9 @@ public class Practice {
 			new BufferedReader(new InputStreamReader(System.in));
 
 			final Message message[] = inbox.getMessages();
-
 			final NaturalLanguageUnderstandingForFeedbackEmail nlu = new NaturalLanguageUnderstandingForFeedbackEmail(bluemix_username, bluemix_password);
 
-			// Message message[] = folder.getMessages();
 			for (int i = 0, n = message.length; i < n; i++) {
-				// for (int i = 0; i < 3; i++) {
-				// System.out.println(i + ": " + message[i].getFrom()[0] + "\t" + message[i].getSubject());
-				//
-				// System.out.println("Do you want to read message? " + "[YES to read/QUIT to end]");
-				// final String line = reader.readLine();
-				// if ("YES".equals(line)) {
-				// message[i].writeTo(System.out);
-				// } else if ("QUIT".equals(line)) {
-				// break;
-				// }
 
 				Object content = message[i].getContent();
 
@@ -167,44 +148,16 @@ public class Practice {
 
 							bodyPart.getDataHandler();
 						} else {
-							// System.out.println("Body@@@@@: " + bodyPart.getContent());
 							content = bodyPart.getContent().toString();
 							if ((j % 2) == 0) {
 
-								System.out.println("\n\ni: " + i + "\n\n");
 								final LiteAppFeedbackParser lp = new LiteAppFeedbackParser(content.toString());
-								// System.out.println(content);
-								System.out.println("from: " + lp.getFrom());
-								System.out.println("date: " + lp.getDate());
-								System.out.println("subject: " + lp.getSubject());
-								System.out.println("to: " + lp.getTo());
-								System.out.println("android version: " + lp.getAndroidVersion());
-								System.out.println("app version: " + lp.getAppVersion());
-								System.out.println("localDateTime: " + lp.getLocalDateTime());
-								System.out.println("location: " + lp.getLocation());
-								System.out.println("locale: " + lp.getLocale());
-								System.out.println("mfg: " + lp.getMfg());
-								System.out.println("model: " + lp.getModel());
-								System.out.println("body: " + lp.getBody());
-								// System.out.println("body20: " + lp.getBody20());
 
 								if (!lp.getBody().trim().isEmpty()) {
 									nlu.putBodyAndGetResponse(lp.getBody());
 
-									System.out.println("@@ Sentiment: " + nlu.getSentimentLabel());
-
-									// if (nlu.getSentimentLabel().equalsIgnoreCase("positive") && sentiment_positive) {
-									// positive_messages_arraylist.add(message[i]);
-									// } else if (nlu.getSentimentLabel().equalsIgnoreCase("negative") && sentiment_negative) {
-									// negative_messages_arraylist.add(message[i]);
-									// }
-
 									final List<KeywordsResult> keywords = nlu.getKeywords();
-									System.out.println("@@ Keywords: ");
 									for (final KeywordsResult keyword : keywords) {
-
-										System.out.println("keyword: " + keyword.getText());
-
 										// if the keyword is category -> move folder
 										if (isCategory(keyword.getText()) != -1) {
 											final String category = categories.get(isCategory(keyword.getText()));
@@ -244,23 +197,6 @@ public class Practice {
 				inbox.copyMessages(msgs, folder);
 				inbox.setFlags(msgs, new Flags(Flags.Flag.DELETED), true);
 			}
-
-			//
-			//
-			// Message[] msgs = folder.getMessages(start, end);
-			// System.out.println("Moving " + msgs.length + " messages");
-			//
-			// if (msgs.length != 0) {
-			// folder.copyMessages(msgs, dfolder);
-			// folder.setFlags(msgs, new Flags(Flags.Flag.DELETED), true);
-			//
-			// // Dump out the Flags of the moved messages, to insure that
-			// // all got deleted
-			// for (int i = 0; i < msgs.length; i++) {
-			// if (!msgs[i].isSet(Flags.Flag.DELETED))
-			// System.out.println("Message # " + msgs[i] + " not deleted");
-			// }
-			// }
 
 		} catch (final MessagingException e) {
 			e.printStackTrace();
